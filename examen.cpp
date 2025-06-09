@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <fstream> //Libreria para poder interactuar o trabajar con archivos
 using namespace std;
 
 // --- Clase Proceso ---
@@ -87,6 +88,43 @@ public:
         }
     }
 };
+//Persistencia - guardar y salir 
+void guardar(const string& aarchivo) {
+     ofstream ofs(archivo);
+    if(!ofs){
+       cout << "Error al abrir el archivo para guardar";
+       return;
+}
+   Nodo* actual = cabeza;
+   While (actual != nullptr){ 
+            ofs << actual->proceso->id << " " << actual->proceso->nombre << " " << actual->proceso->prioridad << "\n";
+            actual = actual->siguiente;
+        }
+        ofs.close();
+    }
+//Cargar la lista de procesos desde un archivo de texto
+    void cargar(const string& archivo) {
+        ifstream ifs(archivo);
+        if (!ifs) {
+            return; // No hay archivo guardado con procesos
+        }
+    // Liberar lista enlazada actual para evitar duplicados
+    Nodo* actual = cabeza;
+    while (actual != nullptr) {
+        Nodo* temp = actual;
+        actual = actual->siguiente;
+        delete temp->proceso;
+        delete temp;
+    }
+    cabeza = nullptr;
+    int id, prioridad;
+    string nombre;
+    // Leer procesos línea a línea y agregarlos a la lista
+    while (ifs >> id >> nombre >> prioridad) {
+        insertar(new Proceso(id, nombre, prioridad));
+    }
+    ifs.close();
+}
 
 // --- Cola de prioridad para GESTOR DE ARRANQUE ---
 struct NodoArranque {
@@ -191,6 +229,47 @@ public:
         }
     }
 };
+//Persistencia para guardar y cargar
+// Guarda la pila de bloques de memoria en un archivo de texto
+void guardar(const string& archivo) {
+    ofstream ofs(archivo);
+    if (!ofs) {
+        cout << "Error al abrir archivo para guardar pila de memoria";
+        return;
+    }
+    Bloque* actual = cima;
+    while (actual != nullptr) {
+        ofs << actual->idProceso << " " << actual->tamano << "\n";
+        actual = actual->siguiente;
+    }
+    ofs.close();
+}
+// Carga la pila de bloques de memoria desde un archivo de texto
+void cargar(const string& archivo) {
+    ifstream ifs(archivo);
+    if (!ifs) {
+        // Si el archivo no existe, no hay memoria asignada para cargar
+        return;
+    }
+    // Liberar pila actual para evitar duplicados
+    while (cima != nullptr) {
+        Bloque* temp = cima;
+        cima = cima->siguiente;
+        delete temp;
+    }
+    cima = nullptr;
+    int id, tamano;
+    vector<pair<int,int>> bloquesTemp;
+    // Leer bloques y almacenarlos temporalmente para preservar orden
+    while (ifs >> id >> tamano) {
+        bloquesTemp.push_back({id, tamano});
+    }
+    ifs.close();
+    // Insertar bloques en orden inverso para mantener el orden correcto de la pila
+    for(int i=(int)bloquesTemp.size()-1; i>=0; i--) {
+        push(bloquesTemp[i].first, bloquesTemp[i].second);
+    }
+}
 
 // --- MAIN ---
 int main() {
@@ -198,6 +277,9 @@ int main() {
     GestorArranque arranque;   
     PilaMemoria pila;
     int opcion;
+    // Cargar datos guardados al iniciar el programa
+    lista.cargar("procesos.txt");
+    pila.cargar("memoria.txt");
 
     do {
         cout << "\n===== SISTEMA DE GESTIÓN DE PROCESOS =====\n";
@@ -272,6 +354,9 @@ int main() {
                 break;
             case 0:
                 cout << "Saliendo...\n";
+               // Guardar datos antes de salir
+                lista.guardar("procesos.txt");
+                pila.guardar("memoria.txt");
                 break;
             default:
                 cout << "Opción no válida.\n";
