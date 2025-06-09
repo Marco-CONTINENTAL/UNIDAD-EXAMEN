@@ -1,7 +1,9 @@
 #include <iostream>
 #include <string>
 #include <fstream> //Libreria para poder interactuar o trabajar con archivos
+#include <vector>
 using namespace std;
+
 
 // --- Clase Proceso ---
 class Proceso {
@@ -87,16 +89,14 @@ public:
             actual = actual->siguiente;
         }
     }
-};
-//Persistencia - guardar y salir 
-void guardar(const string& aarchivo) {
+void guardar(const string& archivo) {
      ofstream ofs(archivo);
     if(!ofs){
        cout << "Error al abrir el archivo para guardar";
        return;
 }
    Nodo* actual = cabeza;
-   While (actual != nullptr){ 
+   while (actual != nullptr){ 
             ofs << actual->proceso->id << " " << actual->proceso->nombre << " " << actual->proceso->prioridad << "\n";
             actual = actual->siguiente;
         }
@@ -125,6 +125,9 @@ void guardar(const string& aarchivo) {
     }
     ifs.close();
 }
+};
+//Persistencia - guardar y salir 
+
 
 // --- Cola de prioridad para GESTOR DE ARRANQUE ---
 struct NodoArranque {
@@ -228,9 +231,6 @@ public:
             actual = actual->siguiente;
         }
     }
-};
-//Persistencia para guardar y cargar
-// Guarda la pila de bloques de memoria en un archivo de texto
 void guardar(const string& archivo) {
     ofstream ofs(archivo);
     if (!ofs) {
@@ -270,6 +270,10 @@ void cargar(const string& archivo) {
         push(bloquesTemp[i].first, bloquesTemp[i].second);
     }
 }
+};
+//Persistencia para guardar y cargar
+// Guarda la pila de bloques de memoria en un archivo de texto
+
 
 // --- MAIN ---
 int main() {
