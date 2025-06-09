@@ -88,63 +88,65 @@ public:
     }
 };
 
-// --- Cola de prioridad para CPU ---
-struct NodoCola {
+// --- Cola de prioridad para GESTOR DE ARRANQUE ---
+struct NodoArranque {
     Proceso* proceso;
-    NodoCola* siguiente;
+    NodoArranque* siguiente;
 };
 
-class ColaCPU {
+class GestorArranque {
 private:
-    NodoCola* frente;
-
+    NodoArranque* frente;
 public:
-    ColaCPU() {
-        frente = nullptr;
-    }
+    GestorArranque() : frente(nullptr) {}
 
+    // encola por prioridad (mayor n√∫mero, mayor prioridad)
     void encolar(Proceso* p) {
-        NodoCola* nuevo = new NodoCola{p, nullptr};
+        NodoArranque* nuevo = new NodoArranque{p, nullptr};
         if (frente == nullptr || p->prioridad > frente->proceso->prioridad) {
             nuevo->siguiente = frente;
             frente = nuevo;
         } else {
-            NodoCola* actual = frente;
-            while (actual->siguiente != nullptr && actual->siguiente->proceso->prioridad >= p->prioridad) {
+            NodoArranque* actual = frente;
+            while (actual->siguiente != nullptr &&
+                   actual->siguiente->proceso->prioridad >= p->prioridad) {
                 actual = actual->siguiente;
             }
             nuevo->siguiente = actual->siguiente;
             actual->siguiente = nuevo;
         }
-        cout << "Proceso encolado en CPU.\n";
+        cout << "Paso de arranque encolado.\n";
     }
 
     void desencolar() {
         if (frente == nullptr) {
-            cout << "La cola est· vacÌa.\n";
+            cout << "La cola de arranque est√° vac√≠a.\n";
             return;
         }
-        cout << "Ejecutando proceso: " << frente->proceso->nombre << endl;
-        NodoCola* temp = frente;
+        cout << "Iniciando paso de arranque: " << frente->proceso->nombre << endl;
+        NodoArranque* temp = frente;
         frente = frente->siguiente;
         delete temp;
     }
 
     void mostrar() {
         if (frente == nullptr) {
-            cout << "La cola CPU est· vacÌa.\n";
+            cout << "La cola de arranque est√° vac√≠a.\n";
             return;
         }
-        NodoCola* actual = frente;
+        NodoArranque* actual = frente;
         while (actual != nullptr) {
-            cout << "ID: " << actual->proceso->id << ", Nombre: " << actual->proceso->nombre
+            cout << "ID: " << actual->proceso->id
+                 << ", Nombre: " << actual->proceso->nombre
                  << ", Prioridad: " << actual->proceso->prioridad << endl;
             actual = actual->siguiente;
         }
     }
 };
 
-// --- Pila para gestiÛn de memoria ---
+
+
+// --- Pila para gesti√≥n de memoria ---
 struct Bloque {
     int idProceso;
     int tamano;
@@ -184,7 +186,7 @@ public:
         }
         Bloque* actual = cima;
         while (actual != nullptr) {
-            cout << "Proceso ID: " << actual->idProceso << ", TamaÒo: " << actual->tamano << "MB" << endl;
+            cout << "Proceso ID: " << actual->idProceso << ", Tama√±o: " << actual->tamano << "MB" << endl;
             actual = actual->siguiente;
         }
     }
@@ -193,24 +195,24 @@ public:
 // --- MAIN ---
 int main() {
     ListaProcesos lista;
-    ColaCPU cola;
+    GestorArranque arranque;   
     PilaMemoria pila;
     int opcion;
 
     do {
-        cout << "\n===== SISTEMA DE GESTI”N DE PROCESOS =====\n";
+        cout << "\n===== SISTEMA DE GESTI√ìN DE PROCESOS =====\n";
         cout << "1. Registrar Proceso\n";
         cout << "2. Eliminar Proceso\n";
         cout << "3. Mostrar Lista de Procesos\n";
         cout << "4. Modificar Prioridad\n";
-        cout << "5. Encolar Proceso a CPU\n";
-        cout << "6. Ejecutar Proceso CPU\n";
-        cout << "7. Mostrar Cola CPU\n";
+        cout << "5. Encolar Paso de Arranque\n";
+        cout << "6. Ejecutar Paso de Arranque\n";
+        cout << "7. Mostrar Cola de Arranque\n";
         cout << "8. Asignar Memoria a Proceso\n";
         cout << "9. Liberar Memoria\n";
         cout << "10. Mostrar Memoria\n";
         cout << "0. Salir\n";
-        cout << "Seleccione una opciÛn: ";
+        cout << "Seleccione una opci√≥n: ";
         cin >> opcion;
 
         switch(opcion) {
@@ -219,7 +221,7 @@ int main() {
                 string nombre;
                 cout << "ID: "; cin >> id;
                 cout << "Nombre: "; cin >> nombre;
-                cout << "Prioridad (mayor n˙mero = mayor prioridad): "; cin >> prioridad;
+                cout << "Prioridad (mayor n√∫mero = mayor prioridad): "; cin >> prioridad;
                 lista.insertar(new Proceso(id, nombre, prioridad));
                 break;
             }
@@ -239,24 +241,26 @@ int main() {
                 lista.modificarPrioridad(id, prio);
                 break;
             }
-            case 5: {
-                int id;
-                cout << "ID del proceso a encolar: "; cin >> id;
-                Proceso* p = lista.buscar(id);
-                if (p) cola.encolar(p);
-                else cout << "Proceso no encontrado.\n";
-                break;
-            }
-            case 6:
-                cola.desencolar();
-                break;
-            case 7:
-                cola.mostrar();
-                break;
+            case 5: {                       // Encolar
+               int id;
+               cout << "ID del proceso a encolar: "; cin >> id;
+               Proceso* p = lista.buscar(id);
+               if (p) arranque.encolar(p);          // ‚Üê usa arranque
+              else cout << "Proceso no encontrado.\n";
+              break;
+          }
+           case 6:                         // Ejecutar
+              arranque.desencolar();
+              break;
+
+          case 7:                         // Mostrar cola
+             arranque.mostrar();
+            break;
+
             case 8: {
                 int id, tamano;
                 cout << "ID Proceso: "; cin >> id;
-                cout << "TamaÒo memoria (MB): "; cin >> tamano;
+                cout << "Tama√±o memoria (MB): "; cin >> tamano;
                 pila.push(id, tamano);
                 break;
             }
@@ -270,7 +274,7 @@ int main() {
                 cout << "Saliendo...\n";
                 break;
             default:
-                cout << "OpciÛn no v·lida.\n";
+                cout << "Opci√≥n no v√°lida.\n";
         }
 
     } while (opcion != 0);
