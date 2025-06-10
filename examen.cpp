@@ -18,7 +18,7 @@ list<Proceso> listaProcesos;
 // Cola para paso de arranque
 queue<Proceso> colaArranque;
 
-// Pila para gestión de memoria
+// Pila para gestiÃ³n de memoria
 stack<Proceso> pilaMemoria;
 
 // Funciones para Lista de Procesos
@@ -26,11 +26,19 @@ void registrarProceso() {
     Proceso p;
     cout << "Ingrese ID del proceso: ";
     cin >> p.id;
+
+    for (const auto& proc : listaProcesos) {
+        if (proc.id == p.id) {
+            cout << "Ya existe un proceso con ese ID.\n";
+            return;
+        }
+    }
+
     cout << "Ingrese prioridad: ";
     cin >> p.prioridad;
     p.memoria = 0;
     listaProcesos.push_back(p);
-    cout << "Proceso registrado con éxito.\n";
+    cout << "Proceso registrado con Ã©xito.\n";
 }
 
 void eliminarProceso() {
@@ -92,7 +100,7 @@ void ejecutarArranque() {
         colaArranque.pop();
         cout << "Ejecutando proceso ID: " << p.id << "\n";
     } else {
-        cout << "La cola está vacía.\n";
+        cout << "La cola estÃ¡ vacÃ­a.\n";
     }
 }
 
@@ -106,7 +114,7 @@ void mostrarColaArranque() {
     }
 }
 
-// Funciones para Gestión de Memoria (Pila)
+// Funciones para GestiÃ³n de Memoria (Pila)
 void asignarMemoria() {
     string id;
     cout << "Ingrese ID del proceso: ";
@@ -129,7 +137,7 @@ void liberarMemoria() {
         pilaMemoria.pop();
         cout << "Memoria liberada del proceso ID: " << p.id << "\n";
     } else {
-        cout << "La pila de memoria está vacía.\n";
+        cout << "La pila de memoria estÃ¡ vacÃ­a.\n";
     }
 }
 
@@ -143,13 +151,13 @@ void mostrarMemoria() {
     }
 }
 
-// Menú principal con secciones mejoradas
+// MenÃº principal con secciones mejoradas
 void mostrarMenu() {
     cout << "==============================================\n";
-    cout << "         SISTEMA DE GESTIÓN DE PROCESOS       \n";
+    cout << "         SISTEMA DE GESTIÃ“N DE PROCESOS       \n";
     cout << "==============================================\n";
 
-    cout << "\n>> GESTIÓN DE LISTA DE PROCESOS\n";
+    cout << "\n>> GESTIÃ“N DE LISTA DE PROCESOS\n";
     cout << " 1. Registrar Proceso\n";
     cout << " 2. Eliminar Proceso\n";
     cout << " 3. Mostrar Lista de Procesos\n";
@@ -160,7 +168,7 @@ void mostrarMenu() {
     cout << " 6. Ejecutar Paso de Arranque\n";
     cout << " 7. Mostrar Cola de Arranque\n";
 
-    cout << "\n>> GESTIÓN DE MEMORIA (PILA)\n";
+    cout << "\n>> GESTIÃ“N DE MEMORIA (PILA)\n";
     cout << " 8. Asignar Memoria a Proceso\n";
     cout << " 9. Liberar Memoria\n";
     cout << "10. Mostrar Memoria\n";
@@ -168,10 +176,10 @@ void mostrarMenu() {
     cout << "\n==============================================\n";
     cout << " 0. Salir\n";
     cout << "==============================================\n";
-    cout << "Seleccione una opción: ";
+    cout << "Seleccione una opciÃ³n: ";
 }
 
-// Función principal
+// FunciÃ³n principal
 int main() {
     int opcion;
     do {
@@ -189,7 +197,7 @@ int main() {
             case 9: liberarMemoria(); break;
             case 10: mostrarMemoria(); break;
             case 0: cout << "Saliendo del sistema...\n"; break;
-            default: cout << "Opción inválida. Intente nuevamente.\n";
+            default: cout << "OpciÃ³n invÃ¡lida. Intente nuevamente.\n";
         }
         cout << endl;
     } while (opcion != 0);
