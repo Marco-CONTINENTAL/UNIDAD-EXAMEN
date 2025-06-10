@@ -266,28 +266,25 @@ void guardar(const string& archivo) {
 // Carga la pila de bloques de memoria desde un archivo de texto
 void cargar(const string& archivo) {
     ifstream ifs(archivo);
-    if (!ifs) {
-        // Si el archivo no existe, no hay memoria asignada para cargar
-        return;
-    }
-    // Liberar pila actual para evitar duplicados
-    while (cima != nullptr) {
-        Bloque* temp = cima;
-        cima = cima->siguiente;
+    if (!ifs) return;
+
+    // Eliminar procesos actuales si hay alguno
+    Nodo* actual = cabeza;
+    while (actual != nullptr) {
+        Nodo* temp = actual;
+        actual = actual->siguiente;
+        delete temp->proceso;
         delete temp;
     }
-    cima = nullptr;
-    int id, tamano;
-    vector<pair<int,int>> bloquesTemp;
-    // Leer bloques y almacenarlos temporalmente para preservar orden
-    while (ifs >> id >> tamano) {
-        bloquesTemp.push_back({id, tamano});
+    cabeza = nullptr;
+
+    int id, prioridad;
+    string nombre;
+
+    while (ifs >> id >> nombre >> prioridad) {
+        insertar(new Proceso(id, nombre, prioridad));
     }
     ifs.close();
-    // Insertar bloques en orden inverso para mantener el orden correcto de la pila
-    for(int i=(int)bloquesTemp.size()-1; i>=0; i--) {
-        push(bloquesTemp[i].first, bloquesTemp[i].second);
-    }
 }
 };
 //Persistencia para guardar y cargar
