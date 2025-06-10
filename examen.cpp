@@ -84,6 +84,16 @@ void encolarArranque() {
     string id;
     cout << "Ingrese ID del proceso a encolar: ";
     cin >> id;
+
+    queue<Proceso> temp = colaArranque;
+    while (!temp.empty()) {
+        if (temp.front().id == id) {
+            cout << "El proceso ya está en la cola.\n";
+            return;
+        }
+        temp.pop();
+    }
+
     for (const auto& p : listaProcesos) {
         if (p.id == id) {
             colaArranque.push(p);
@@ -93,6 +103,7 @@ void encolarArranque() {
     }
     cout << "Proceso no encontrado.\n";
 }
+
 
 void ejecutarArranque() {
     if (!colaArranque.empty()) {
