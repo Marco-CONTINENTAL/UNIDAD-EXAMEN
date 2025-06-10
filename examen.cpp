@@ -1,371 +1,197 @@
 #include <iostream>
 #include <string>
-#include <fstream> //Libreria para poder interactuar o trabajar con archivos
-#include <vector>
+#include <queue>
+#include <stack>
+#include <list>
 using namespace std;
 
-
-// --- Clase Proceso ---
-class Proceso {
-public:
-    int id;
-    string nombre;
+// Estructura para representar un proceso
+struct Proceso {
+    string id;
     int prioridad;
-
-    Proceso(int id, string nombre, int prioridad) {
-        this->id = id;
-        this->nombre = nombre;
-        this->prioridad = prioridad;
-    }
+    int memoria;
 };
 
-// --- Lista enlazada para procesos ---
-struct Nodo {
-    Proceso* proceso;
-    Nodo* siguiente;
-};
+// Lista de procesos
+list<Proceso> listaProcesos;
 
-class ListaProcesos {
-private:
-    Nodo* cabeza;
+// Cola para paso de arranque
+queue<Proceso> colaArranque;
 
-public:
-    ListaProcesos() {
-        cabeza = nullptr;
-    }
+// Pila para gestiÛn de memoria
+stack<Proceso> pilaMemoria;
 
-    void insertar(Proceso* p) {
-        Nodo* nuevo = new Nodo{p, cabeza};
-        cabeza = nuevo;
-    }
+// Funciones para Lista de Procesos
+void registrarProceso() {
+    Proceso p;
+    cout << "Ingrese ID del proceso: ";
+    cin >> p.id;
+    cout << "Ingrese prioridad: ";
+    cin >> p.prioridad;
+    p.memoria = 0;
+    listaProcesos.push_back(p);
+    cout << "Proceso registrado con Èxito.\n";
+}
 
-    void eliminar(int id) {
-        Nodo *actual = cabeza, *anterior = nullptr;
-        while (actual != nullptr && actual->proceso->id != id) {
-            anterior = actual;
-            actual = actual->siguiente;
-        }
-        if (actual != nullptr) {
-            if (anterior == nullptr)
-                cabeza = actual->siguiente;
-            else
-                anterior->siguiente = actual->siguiente;
-            delete actual;
+void eliminarProceso() {
+    string id;
+    cout << "Ingrese ID del proceso a eliminar: ";
+    cin >> id;
+    for (auto it = listaProcesos.begin(); it != listaProcesos.end(); ++it) {
+        if (it->id == id) {
+            listaProcesos.erase(it);
             cout << "Proceso eliminado.\n";
-        } else {
-            cout << "Proceso no encontrado.\n";
+            return;
         }
     }
+    cout << "Proceso no encontrado.\n";
+}
 
-    Proceso* buscar(int id) {
-        Nodo* actual = cabeza;
-        while (actual != nullptr) {
-            if (actual->proceso->id == id)
-                return actual->proceso;
-            actual = actual->siguiente;
-        }
-        return nullptr;
+void mostrarProcesos() {
+    cout << "Lista de procesos:\n";
+    for (const auto& p : listaProcesos) {
+        cout << "ID: " << p.id << ", Prioridad: " << p.prioridad << ", Memoria: " << p.memoria << "\n";
     }
+}
 
-    void modificarPrioridad(int id, int nuevaPrioridad) {
-        Proceso* p = buscar(id);
-        if (p != nullptr) {
-            p->prioridad = nuevaPrioridad;
+void modificarPrioridad() {
+    string id;
+    int nuevaPrioridad;
+    cout << "Ingrese ID del proceso: ";
+    cin >> id;
+    cout << "Ingrese nueva prioridad: ";
+    cin >> nuevaPrioridad;
+    for (auto& p : listaProcesos) {
+        if (p.id == id) {
+            p.prioridad = nuevaPrioridad;
             cout << "Prioridad modificada.\n";
-        } else {
-            cout << "Proceso no encontrado.\n";
-        }
-    }
-
-    void mostrar() {
-        if (cabeza == nullptr) {
-            cout << "No hay procesos registrados.\n";
             return;
         }
-        Nodo* actual = cabeza;
-        while (actual != nullptr) {
-            cout << "ID: " << actual->proceso->id << ", Nombre: " << actual->proceso->nombre
-                 << ", Prioridad: " << actual->proceso->prioridad << endl;
-            actual = actual->siguiente;
-        }
     }
-void guardar(const string& archivo) {
-     ofstream ofs(archivo);
-    if(!ofs){
-       cout << "Error al abrir el archivo para guardar";
-       return;
+    cout << "Proceso no encontrado.\n";
 }
-   Nodo* actual = cabeza;
-   while (actual != nullptr){ 
-            ofs << actual->proceso->id << " " << actual->proceso->nombre << " " << actual->proceso->prioridad << "\n";
-            actual = actual->siguiente;
+
+// Funciones para Cola de Arranque
+void encolarArranque() {
+    string id;
+    cout << "Ingrese ID del proceso a encolar: ";
+    cin >> id;
+    for (const auto& p : listaProcesos) {
+        if (p.id == id) {
+            colaArranque.push(p);
+            cout << "Proceso encolado.\n";
+            return;
         }
-        ofs.close();
     }
-//Cargar la lista de procesos desde un archivo de texto
-    void cargar(const string& archivo) {
-        ifstream ifs(archivo);
-        if (!ifs) {
-            return; // No hay archivo guardado con procesos
-        }
-    // Liberar lista enlazada actual para evitar duplicados
-    Nodo* actual = cabeza;
-    while (actual != nullptr) {
-        Nodo* temp = actual;
-        actual = actual->siguiente;
-        delete temp->proceso;
-        delete temp;
-    }
-    cabeza = nullptr;
-    int id, prioridad;
-    string nombre;
-    // Leer procesos l√≠nea a l√≠nea y agregarlos a la lista
-    while (ifs >> id >> nombre >> prioridad) {
-        insertar(new Proceso(id, nombre, prioridad));
-    }
-    ifs.close();
+    cout << "Proceso no encontrado.\n";
 }
-};
-//Persistencia - guardar y salir 
 
-
-// --- Cola de prioridad para GESTOR DE ARRANQUE ---
-struct NodoArranque {
-    Proceso* proceso;
-    NodoArranque* siguiente;
-};
-
-class GestorArranque {
-private:
-    NodoArranque* frente;
-public:
-    GestorArranque() : frente(nullptr) {}
-
-    // encola por prioridad (mayor n√∫mero, mayor prioridad)
-    void encolar(Proceso* p) {
-        NodoArranque* nuevo = new NodoArranque{p, nullptr};
-        if (frente == nullptr || p->prioridad > frente->proceso->prioridad) {
-            nuevo->siguiente = frente;
-            frente = nuevo;
-        } else {
-            NodoArranque* actual = frente;
-            while (actual->siguiente != nullptr &&
-                   actual->siguiente->proceso->prioridad >= p->prioridad) {
-                actual = actual->siguiente;
-            }
-            nuevo->siguiente = actual->siguiente;
-            actual->siguiente = nuevo;
-        }
-        cout << "Paso de arranque encolado.\n";
-    }
-
-    void desencolar() {
-        if (frente == nullptr) {
-            cout << "La cola de arranque est√° vac√≠a.\n";
-            return;
-        }
-        cout << "Iniciando paso de arranque: " << frente->proceso->nombre << endl;
-        NodoArranque* temp = frente;
-        frente = frente->siguiente;
-        delete temp;
-    }
-
-    void mostrar() {
-        if (frente == nullptr) {
-            cout << "La cola de arranque est√° vac√≠a.\n";
-            return;
-        }
-        NodoArranque* actual = frente;
-        while (actual != nullptr) {
-            cout << "ID: " << actual->proceso->id
-                 << ", Nombre: " << actual->proceso->nombre
-                 << ", Prioridad: " << actual->proceso->prioridad << endl;
-            actual = actual->siguiente;
-        }
-    }
-};
-
-
-
-// --- Pila para gesti√≥n de memoria ---
-struct Bloque {
-    int idProceso;
-    int tamano;
-    Bloque* siguiente;
-};
-
-class PilaMemoria {
-private:
-    Bloque* cima;
-
-public:
-    PilaMemoria() {
-        cima = nullptr;
-    }
-
-    void push(int id, int tamano) {
-        Bloque* nuevo = new Bloque{id, tamano, cima};
-        cima = nuevo;
-        cout << "Memoria asignada.\n";
-    }
-
-    void pop() {
-        if (cima == nullptr) {
-            cout << "No hay memoria que liberar.\n";
-            return;
-        }
-        cout << "Liberando memoria del proceso: " << cima->idProceso << endl;
-        Bloque* temp = cima;
-        cima = cima->siguiente;
-        delete temp;
-    }
-
-    void mostrar() {
-        if (cima == nullptr) {
-            cout << "No hay memoria asignada.\n";
-            return;
-        }
-        Bloque* actual = cima;
-        while (actual != nullptr) {
-            cout << "Proceso ID: " << actual->idProceso << ", Tama√±o: " << actual->tamano << "MB" << endl;
-            actual = actual->siguiente;
-        }
-    }
-void guardar(const string& archivo) {
-    ofstream ofs(archivo);
-    if (!ofs) {
-        cout << "Error al abrir archivo para guardar pila de memoria";
-        return;
-    }
-    Bloque* actual = cima;
-    while (actual != nullptr) {
-        ofs << actual->idProceso << " " << actual->tamano << "\n";
-        actual = actual->siguiente;
-    }
-    ofs.close();
-}
-// Carga la pila de bloques de memoria desde un archivo de texto
-void cargar(const string& archivo) {
-    ifstream ifs(archivo);
-    if (!ifs) {
-        // Si el archivo no existe, no hay memoria asignada para cargar
-        return;
-    }
-    // Liberar pila actual para evitar duplicados
-    while (cima != nullptr) {
-        Bloque* temp = cima;
-        cima = cima->siguiente;
-        delete temp;
-    }
-    cima = nullptr;
-    int id, tamano;
-    vector<pair<int,int>> bloquesTemp;
-    // Leer bloques y almacenarlos temporalmente para preservar orden
-    while (ifs >> id >> tamano) {
-        bloquesTemp.push_back({id, tamano});
-    }
-    ifs.close();
-    // Insertar bloques en orden inverso para mantener el orden correcto de la pila
-    for(int i=(int)bloquesTemp.size()-1; i>=0; i--) {
-        push(bloquesTemp[i].first, bloquesTemp[i].second);
+void ejecutarArranque() {
+    if (!colaArranque.empty()) {
+        Proceso p = colaArranque.front();
+        colaArranque.pop();
+        cout << "Ejecutando proceso ID: " << p.id << "\n";
+    } else {
+        cout << "La cola est· vacÌa.\n";
     }
 }
-};
-//Persistencia para guardar y cargar
-// Guarda la pila de bloques de memoria en un archivo de texto
 
+void mostrarColaArranque() {
+    queue<Proceso> temp = colaArranque;
+    cout << "Cola de arranque:\n";
+    while (!temp.empty()) {
+        Proceso p = temp.front();
+        temp.pop();
+        cout << "ID: " << p.id << ", Prioridad: " << p.prioridad << "\n";
+    }
+}
 
-// --- MAIN ---
+// Funciones para GestiÛn de Memoria (Pila)
+void asignarMemoria() {
+    string id;
+    cout << "Ingrese ID del proceso: ";
+    cin >> id;
+    for (auto& p : listaProcesos) {
+        if (p.id == id) {
+            cout << "Ingrese cantidad de memoria a asignar: ";
+            cin >> p.memoria;
+            pilaMemoria.push(p);
+            cout << "Memoria asignada.\n";
+            return;
+        }
+    }
+    cout << "Proceso no encontrado.\n";
+}
+
+void liberarMemoria() {
+    if (!pilaMemoria.empty()) {
+        Proceso p = pilaMemoria.top();
+        pilaMemoria.pop();
+        cout << "Memoria liberada del proceso ID: " << p.id << "\n";
+    } else {
+        cout << "La pila de memoria est· vacÌa.\n";
+    }
+}
+
+void mostrarMemoria() {
+    stack<Proceso> temp = pilaMemoria;
+    cout << "Procesos en pila de memoria:\n";
+    while (!temp.empty()) {
+        Proceso p = temp.top();
+        temp.pop();
+        cout << "ID: " << p.id << ", Memoria: " << p.memoria << "\n";
+    }
+}
+
+// Men˙ principal con secciones mejoradas
+void mostrarMenu() {
+    cout << "==============================================\n";
+    cout << "         SISTEMA DE GESTI”N DE PROCESOS       \n";
+    cout << "==============================================\n";
+
+    cout << "\n>> GESTI”N DE LISTA DE PROCESOS\n";
+    cout << " 1. Registrar Proceso\n";
+    cout << " 2. Eliminar Proceso\n";
+    cout << " 3. Mostrar Lista de Procesos\n";
+    cout << " 4. Modificar Prioridad\n";
+
+    cout << "\n>> COLA DE ARRANQUE\n";
+    cout << " 5. Encolar Paso de Arranque\n";
+    cout << " 6. Ejecutar Paso de Arranque\n";
+    cout << " 7. Mostrar Cola de Arranque\n";
+
+    cout << "\n>> GESTI”N DE MEMORIA (PILA)\n";
+    cout << " 8. Asignar Memoria a Proceso\n";
+    cout << " 9. Liberar Memoria\n";
+    cout << "10. Mostrar Memoria\n";
+
+    cout << "\n==============================================\n";
+    cout << " 0. Salir\n";
+    cout << "==============================================\n";
+    cout << "Seleccione una opciÛn: ";
+}
+
+// FunciÛn principal
 int main() {
-    ListaProcesos lista;
-    GestorArranque arranque;   
-    PilaMemoria pila;
     int opcion;
-    // Cargar datos guardados al iniciar el programa
-    lista.cargar("procesos.txt");
-    pila.cargar("memoria.txt");
-
     do {
-        cout << "\n===== SISTEMA DE GESTI√ìN DE PROCESOS =====\n";
-        cout << "1. Registrar Proceso\n";
-        cout << "2. Eliminar Proceso\n";
-        cout << "3. Mostrar Lista de Procesos\n";
-        cout << "4. Modificar Prioridad\n";
-        cout << "5. Encolar Paso de Arranque\n";
-        cout << "6. Ejecutar Paso de Arranque\n";
-        cout << "7. Mostrar Cola de Arranque\n";
-        cout << "8. Asignar Memoria a Proceso\n";
-        cout << "9. Liberar Memoria\n";
-        cout << "10. Mostrar Memoria\n";
-        cout << "0. Salir\n";
-        cout << "Seleccione una opci√≥n: ";
+        mostrarMenu();
         cin >> opcion;
-
-        switch(opcion) {
-            case 1: {
-                int id, prioridad;
-                string nombre;
-                cout << "ID: "; cin >> id;
-                cout << "Nombre: "; cin >> nombre;
-                cout << "Prioridad (mayor n√∫mero = mayor prioridad): "; cin >> prioridad;
-                lista.insertar(new Proceso(id, nombre, prioridad));
-                break;
-            }
-            case 2: {
-                int id;
-                cout << "ID a eliminar: "; cin >> id;
-                lista.eliminar(id);
-                break;
-            }
-            case 3:
-                lista.mostrar();
-                break;
-            case 4: {
-                int id, prio;
-                cout << "ID del proceso: "; cin >> id;
-                cout << "Nueva prioridad: "; cin >> prio;
-                lista.modificarPrioridad(id, prio);
-                break;
-            }
-            case 5: {                       // Encolar
-               int id;
-               cout << "ID del proceso a encolar: "; cin >> id;
-               Proceso* p = lista.buscar(id);
-               if (p) arranque.encolar(p);          // ‚Üê usa arranque
-              else cout << "Proceso no encontrado.\n";
-              break;
-          }
-           case 6:                         // Ejecutar
-              arranque.desencolar();
-              break;
-
-          case 7:                         // Mostrar cola
-             arranque.mostrar();
-            break;
-
-            case 8: {
-                int id, tamano;
-                cout << "ID Proceso: "; cin >> id;
-                cout << "Tama√±o memoria (MB): "; cin >> tamano;
-                pila.push(id, tamano);
-                break;
-            }
-            case 9:
-                pila.pop();
-                break;
-            case 10:
-                pila.mostrar();
-                break;
-            case 0:
-                cout << "Saliendo...\n";
-               // Guardar datos antes de salir
-                lista.guardar("procesos.txt");
-                pila.guardar("memoria.txt");
-                break;
-            default:
-                cout << "Opci√≥n no v√°lida.\n";
+        switch (opcion) {
+            case 1: registrarProceso(); break;
+            case 2: eliminarProceso(); break;
+            case 3: mostrarProcesos(); break;
+            case 4: modificarPrioridad(); break;
+            case 5: encolarArranque(); break;
+            case 6: ejecutarArranque(); break;
+            case 7: mostrarColaArranque(); break;
+            case 8: asignarMemoria(); break;
+            case 9: liberarMemoria(); break;
+            case 10: mostrarMemoria(); break;
+            case 0: cout << "Saliendo del sistema...\n"; break;
+            default: cout << "OpciÛn inv·lida. Intente nuevamente.\n";
         }
-
+        cout << endl;
     } while (opcion != 0);
 
     return 0;
