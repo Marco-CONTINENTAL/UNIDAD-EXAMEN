@@ -3,7 +3,6 @@
 #include <fstream>
 #include <vector>
 #include <limits> // Para numeric_limits
-//#include <memory> // No incluir memory para evitar unique_ptr
 
 using namespace std;
 
